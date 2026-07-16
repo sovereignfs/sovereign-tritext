@@ -1,6 +1,6 @@
 {
   "name": "@sovereignfs/plugin-tritext",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,9 +8,15 @@
     "db:generate": "drizzle-kit generate --schema app/_lib/db/schema.ts --out migrations/sqlite --dialect sqlite && drizzle-kit generate --schema app/_lib/db/schema.postgres.ts --out migrations/postgres --dialect postgresql"
   },
   "dependencies": {
+    "@lexical/list": "^0.48.0",
+    "@lexical/react": "^0.48.0",
+    "@lexical/rich-text": "^0.48.0",
+    "@lexical/selection": "^0.48.0",
+    "@lexical/utils": "^0.48.0",
     "@sovereignfs/sdk": "workspace:*",
     "@sovereignfs/ui": "workspace:*",
     "drizzle-orm": "^0.45.2",
+    "lexical": "^0.48.0",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"

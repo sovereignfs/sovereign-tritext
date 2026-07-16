@@ -9,7 +9,7 @@ Chronological build index — one row per PR. Concept/plan live in
 | 0     | Scaffold                          | ✅     | [Working conventions](CLAUDE.md#working-conventions)               |
 | 1     | Isolated DB schema                | ✅     | [Data model](CLAUDE.md#data-model)                                 |
 | 2     | Project CRUD + shell UI           | ✅     | [F1](CLAUDE.md#functional-requirements)                            |
-| 3     | Lexical editor + autosave         | 📋     | [F3](CLAUDE.md#functional-requirements)                            |
+| 3     | Lexical editor + autosave         | ✅     | [F3](CLAUDE.md#functional-requirements)                            |
 | 4     | Block groups + drag reorder       | 📋     | [F2, F4](CLAUDE.md#functional-requirements)                        |
 | 5     | Collaborators via `sdk.directory` | 📋     | [F5, Collaborator model](CLAUDE.md#collaborator-model)             |
 | 6     | Linting engine port               | 📋     | [F6](CLAUDE.md#functional-requirements)                            |
@@ -92,15 +92,49 @@ not the platform-documented plugin-root `db/`.
 
 ---
 
-#### 📋 Phase 3 — Lexical editor + autosave
+#### ✅ Phase 3 — Lexical editor + autosave
 
 **Goal:** Per-language rich-text editing with debounced autosave.
 
-**Deliverables:** ported `RichTextEditor`/`FloatingToolbar`/`FontSizeControls`
-(styling rewritten to CSS Modules), `SplitPane`-based per-language layout,
-autosave server action.
+**Deliverables:**
+
+- `RichTextEditor`/`FloatingToolbarPlugin`/`FontSizeControls` built on Lexical
+  0.48 (`app/_components/editor/`) — bold/italic/underline, H1/H2, quote,
+  bulleted list, and a font-size stepper, styled with CSS Modules
+- Per-language layout: `@sovereignfs/ui`'s `SplitPane` for 2 enabled
+  languages, an equal-width CSS grid for 3 (see "Discovered during this
+  phase"), a single pane for 1
+- `app/blocks-actions.ts` — `listBlocks`, `getBlock`, `createBlockAction`,
+  `autosaveBlockContentAction`, gated by `canEditLanguage` (owner/admin edit
+  all languages; editor per their `can_edit_*` flags; viewer read-only)
+- Minimal ungrouped block list + "Add block" on the project page
+  (`BlocksSection`) so blocks are creatable ahead of Phase 4's group UI
+- `app/_lib/access.ts` — `resolveAccess`/`canEditLanguage`/`getDb` factored
+  out of `actions.ts` so `blocks-actions.ts` shares the same access checks
 
 **Dependencies:** Phase 2 shell
+
+**Review checklist:**
+
+- ✅ `pnpm typecheck` / `eslint` / `prettier --check` all pass (run from the
+  platform root against `plugins/sovereign-tritext.local/`)
+- ✅ Verified live: `pnpm dev`, created a trilingual project, added a block,
+  typed in the Tamil pane, selected text and applied Bold via the floating
+  toolbar, confirmed "Saving…" → "Saved", reloaded and confirmed the
+  formatted content persisted and the project's block-list preview reflects
+  it
+- ✅ Font-size stepper and H1/H2/quote/bulleted-list toggles verified in the
+  floating toolbar
+
+**Discovered during this phase** (see CLAUDE.md Decision Log): `SplitPane`
+only supports exactly 2 panes (`primary`/`secondary`), so trilingual mode
+(3 enabled languages) can't use it — falls back to a plain equal-width CSS
+grid in `BlockEditorView`. Also: this repo has no local ESLint config of its
+own (no `lint` script in `package.json`) — it's linted by the platform's
+root flat config when developed in-tree, which does **not** register
+`eslint-plugin-react-hooks`, so `// eslint-disable-next-line
+react-hooks/exhaustive-deps` errors as an unknown-rule reference here even
+though it's a normal pattern in other React codebases.
 
 ---
 

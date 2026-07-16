@@ -67,3 +67,99 @@
   color: var(--sv-color-text-muted);
   margin: var(--sv-space-1) 0 0;
 }
+
+.blocksSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sv-space-3);
+}
+
+.blocksSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sv-space-3);
+}
+
+.sectionTitle {
+  font-size: var(--sv-font-size-lg);
+  font-weight: 600;
+  color: var(--sv-color-text-primary);
+  margin: 0;
+}
+
+.blockList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sv-space-2);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.blockLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.blockPreview {
+  font-size: var(--sv-font-size-sm);
+  color: var(--sv-color-text-primary);
+  margin: 0;
+}
+
+.blockMeta {
+  font-size: var(--sv-font-size-xs);
+  color: var(--sv-color-text-muted);
+  margin: var(--sv-space-1) 0 0;
+}
+
+.blockEditorPage {
+  padding: var(--sv-space-8) var(--sv-space-6);
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sv-space-6);
+}
+
+.backLink {
+  font-size: var(--sv-font-size-sm);
+  color: var(--sv-color-text-muted);
+}
+
+.singlePane {
+  display: flex;
+  flex-direction: column;
+  height: 24rem;
+}
+
+.multiPane {
+  display: grid;
+  grid-template-columns: repeat(var(--tritext-pane-count, 3), 1fr);
+  gap: var(--sv-space-4);
+  height: 24rem;
+}
+
+.languagePane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sv-space-2);
+  height: 100%;
+  min-width: 0;
+}
+
+.languagePaneHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sv-space-2);
+}
+
+.languagePaneTitle {
+  font-size: var(--sv-font-size-sm);
+  font-weight: 600;
+  color: var(--sv-color-text-primary);
+  margin: 0;
+}
