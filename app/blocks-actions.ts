@@ -2,55 +2,11 @@
 
 import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { sdk } from '@sovereignfs/sdk';
 import { canEditLanguage, getDb, type Language, nowSeconds, resolveAccess } from './_lib/access';
+import { nextOrderInBucket } from './_lib/blockSummary';
 import { contentBlocks } from './_lib/db/schema';
-import { extractPlainText } from './_lib/editor/plainText';
-
-export interface BlockSummary {
-  id: string;
-  blockType: string;
-  status: string;
-  orderNumber: number;
-  updatedAt: number;
-  preview: string;
-}
-
-/** Ungrouped blocks for a project — block groups land in a later phase. */
-export async function listBlocks(projectId: string): Promise<BlockSummary[]> {
-  const session = await sdk.auth.requireSession();
-  const db = await getDb();
-  const access = await resolveAccess(db, projectId, session.user.id, session.user.tenantId);
-  if (!access) return [];
-
-  const rows = await db
-    .select()
-    .from(contentBlocks)
-    .where(and(eq(contentBlocks.projectId, projectId), isNull(contentBlocks.groupId)));
-
-  const primaryLanguage = access.project.primaryLanguage as Language;
-
-  return rows
-    .map((row) => {
-      const byLanguage: Record<Language, string | null> = {
-        sinhala: row.sinhalaText,
-        tamil: row.tamilText,
-        english: row.englishText,
-      };
-      const text =
-        byLanguage[primaryLanguage] ?? row.sinhalaText ?? row.tamilText ?? row.englishText;
-      return {
-        id: row.id,
-        blockType: row.blockType,
-        status: row.status,
-        orderNumber: row.orderNumber,
-        updatedAt: row.updatedAt,
-        preview: extractPlainText(text) || 'Empty block',
-      };
-    })
-    .sort((a, b) => a.orderNumber - b.orderNumber);
-}
 
 export interface BlockDetail {
   id: string;
@@ -107,11 +63,8 @@ export async function createBlockAction(
   if (!access) return { ok: false, error: 'Project not found.' };
   if (access.role === 'viewer') return { ok: false, error: 'Viewers cannot add blocks.' };
 
-  const existing = await db
-    .select({ orderNumber: contentBlocks.orderNumber })
-    .from(contentBlocks)
-    .where(and(eq(contentBlocks.projectId, projectId), isNull(contentBlocks.groupId)));
-  const nextOrder = existing.reduce((max, row) => Math.max(max, row.orderNumber), -1) + 1;
+  const groupId = (formData.get('groupId') as string | null) || null;
+  const nextOrder = await nextOrderInBucket(db, projectId, groupId);
 
   const id = randomUUID();
   const now = nowSeconds();
@@ -119,7 +72,7 @@ export async function createBlockAction(
     id,
     tenantId: session.user.tenantId,
     projectId,
-    groupId: null,
+    groupId,
     blockType: 'text',
     orderNumber: nextOrder,
     createdAt: now,

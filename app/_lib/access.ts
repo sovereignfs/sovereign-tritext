@@ -17,17 +17,19 @@ export type ProjectRole = 'owner' | 'admin' | 'editor' | 'viewer';
 
 export type Language = 'sinhala' | 'tamil' | 'english';
 
+export interface Access {
+  project: typeof projects.$inferSelect;
+  role: ProjectRole;
+  member: typeof projectMembers.$inferSelect | null;
+}
+
 /** Resolves the current user's access to a project, or `null` if they have none. */
 export async function resolveAccess(
   db: Db,
   projectId: string,
   userId: string,
   tenantId: string,
-): Promise<{
-  project: typeof projects.$inferSelect;
-  role: ProjectRole;
-  member: typeof projectMembers.$inferSelect | null;
-} | null> {
+): Promise<Access | null> {
   const [project] = await db
     .select()
     .from(projects)
@@ -58,10 +60,7 @@ const CAN_EDIT_FLAG: Record<Language, keyof typeof projectMembers.$inferSelect> 
 };
 
 /** Whether the resolved access allows editing the given language's content. */
-export function canEditLanguage(
-  access: { role: ProjectRole; member: typeof projectMembers.$inferSelect | null },
-  language: Language,
-): boolean {
+export function canEditLanguage(access: Access, language: Language): boolean {
   if (access.role === 'owner' || access.role === 'admin') return true;
   if (access.role !== 'editor' || !access.member) return false;
   return access.member[CAN_EDIT_FLAG[language]] === true;

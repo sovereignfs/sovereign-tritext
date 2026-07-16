@@ -163,3 +163,137 @@
   color: var(--sv-color-text-primary);
   margin: 0;
 }
+
+.addControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sv-space-3);
+}
+
+.inlineForm {
+  display: flex;
+  align-items: center;
+  gap: var(--sv-space-2);
+}
+
+.groupList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sv-space-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ungroupedSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sv-space-2);
+}
+
+.sectionSubtitle {
+  font-size: var(--sv-font-size-sm);
+  font-weight: 600;
+  color: var(--sv-color-text-muted);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.groupCard {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--sv-color-border);
+  border-radius: var(--sv-radius-md);
+  background-color: var(--sv-color-surface);
+  overflow: hidden;
+}
+
+.groupHeaderContent {
+  display: flex;
+  align-items: center;
+  gap: var(--sv-space-2);
+  min-width: 0;
+}
+
+.collapseToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--sv-radius-sm);
+  background: transparent;
+  color: var(--sv-color-text-muted);
+  cursor: pointer;
+}
+
+.collapseToggle:hover {
+  background-color: var(--sv-color-accent-subtle);
+}
+
+.groupNameInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.groupName {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--sv-font-size-sm);
+  font-weight: 600;
+  color: var(--sv-color-text-primary);
+}
+
+.blockCount {
+  font-size: var(--sv-font-size-xs);
+  color: var(--sv-color-text-muted);
+  white-space: nowrap;
+}
+
+.deleteGroupButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--sv-radius-sm);
+  background: transparent;
+  color: var(--sv-color-text-muted);
+  cursor: pointer;
+}
+
+.deleteGroupButton:hover {
+  background-color: var(--sv-color-error-surface);
+  color: var(--sv-color-error-text);
+}
+
+.groupBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sv-space-2);
+  padding: var(--sv-space-2) var(--sv-space-3) var(--sv-space-3);
+  border-top: 1px solid var(--sv-color-border);
+}
+
+.addBlockForm {
+  align-self: flex-start;
+}
+
+.blockRowContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sv-space-3);
+  min-width: 0;
+}
+
+.moveSelect {
+  flex-shrink: 0;
+  width: 10rem;
+}

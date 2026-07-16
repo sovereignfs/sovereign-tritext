@@ -10,7 +10,7 @@ Chronological build index — one row per PR. Concept/plan live in
 | 1     | Isolated DB schema                | ✅     | [Data model](CLAUDE.md#data-model)                                 |
 | 2     | Project CRUD + shell UI           | ✅     | [F1](CLAUDE.md#functional-requirements)                            |
 | 3     | Lexical editor + autosave         | ✅     | [F3](CLAUDE.md#functional-requirements)                            |
-| 4     | Block groups + drag reorder       | 📋     | [F2, F4](CLAUDE.md#functional-requirements)                        |
+| 4     | Block groups + drag reorder       | ✅     | [F2, F4](CLAUDE.md#functional-requirements)                        |
 | 5     | Collaborators via `sdk.directory` | 📋     | [F5, Collaborator model](CLAUDE.md#collaborator-model)             |
 | 6     | Linting engine port               | 📋     | [F6](CLAUDE.md#functional-requirements)                            |
 | 7     | DOCX export                       | 📋     | [F7](CLAUDE.md#functional-requirements)                            |
@@ -138,14 +138,60 @@ though it's a normal pattern in other React codebases.
 
 ---
 
-#### 📋 Phase 4 — Block groups + drag reorder
+#### ✅ Phase 4 — Block groups + drag reorder
 
 **Goal:** Collapsible block groups; drag-and-drop reordering of both groups
 and blocks within a group.
 
-**Deliverables:** group CRUD, `@dnd-kit` reorder wired to `order_number`.
+**Deliverables:**
+
+- `app/groups-actions.ts` — `getProjectContent` (groups + blocks assembled
+  server-side in two queries), `createGroupAction`, `renameGroupAction`,
+  `deleteGroupAction` (ungroups its blocks in a transaction, never deletes
+  content), `toggleGroupCollapsedAction`, `reorderGroupsAction`,
+  `reorderBlocksAction`, `moveBlockToGroupAction`
+- `app/_lib/blockSummary.ts` — `groupIdCondition`/`toBlockSummary`/
+  `nextOrderInBucket` factored out of `blocks-actions.ts`: Next.js requires
+  every export of a `'use server'` file to be an async function, and these
+  are synchronous (see "Discovered during this phase")
+- `app/_components/ProjectContentView.tsx`/`GroupCard.tsx`/`BlockRow.tsx` —
+  replace Phase 3's `BlocksSection`: groups render via `@dnd-kit`
+  `DndContext`/`SortableContext` (one context for the groups list, one
+  nested per group's blocks, one for the ungrouped bucket), each group a
+  `@sovereignfs/ui` `DragHandleRow` with an inline-rename `Input`
+  (`useCommitOnEnterOrBlur`), collapse toggle, and `ConfirmDialog`-gated
+  delete; each block row also a `DragHandleRow` with a "Move to" `Select`
+  for moving between groups without needing cross-container drag
+- `app/_lib/dndSensors.ts` — shared `useReorderSensors()` (`PointerSensor` +
+  `KeyboardSensor`); simpler than `sovereign-tasks`' whole-row-drag setup
+  since the drag handle here is a dedicated small target, not the whole row
 
 **Dependencies:** Phase 3 editor (blocks must be creatable/editable first)
+
+**Review checklist:**
+
+- ✅ `pnpm typecheck` / `eslint` / `prettier --check` all pass
+- ✅ Verified live: created groups, renamed via commit-on-blur, moved a
+  block between groups via the "Move to" select, collapsed/expanded a
+  group, deleted a group and confirmed its block moved back to Ungrouped
+  with content intact (not deleted)
+- ⚠️ Pointer-drag reorder itself could not be exercised end-to-end through
+  the browser-automation tool available in this session — dnd-kit's
+  `PointerSensor`/`KeyboardSensor` activation isn't reliably triggered by
+  its synthetic input. Verified instead by: dnd-kit generating its own
+  accessibility scaffolding (live region, `aria-describedby`, keyboard
+  instructions) on page load, which only happens when
+  `DndContext`/`SortableContext`/`useSortable` are wired correctly; and the
+  pattern matching `sovereign-tasks`' proven, shipped drag-reorder
+  implementation. A human should confirm actual mouse-drag reordering
+  before this ships.
+
+**Discovered during this phase** (see CLAUDE.md Decision Log): a
+`'use server'` file's exports must *all* be async functions — a plain
+synchronous helper (`groupIdCondition`, `toBlockSummary`) breaks the whole
+file at build time ("Server Actions must be async functions"), not just a
+lint warning. Both moved to a plain module (`_lib/blockSummary.ts`) shared
+by `blocks-actions.ts` and `groups-actions.ts`.
 
 ---
 

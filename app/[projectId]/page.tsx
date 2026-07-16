@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation';
 import { sdk } from '@sovereignfs/sdk';
 import { PageHeader } from '@sovereignfs/ui';
-import { BlocksSection } from '../_components/BlocksSection';
+import { ProjectContentView } from '../_components/ProjectContentView';
 import { ProjectSettingsForm } from '../_components/ProjectSettingsForm';
 import { getProject } from '../actions';
-import { listBlocks } from '../blocks-actions';
+import { getProjectContent } from '../groups-actions';
 import styles from '../tritext.module.css';
 
 interface Props {
@@ -16,15 +16,16 @@ export default async function ProjectDetailPage({ params }: Props) {
   const { projectId } = await params;
   const project = await getProject(projectId);
   if (!project) notFound();
-  const blocks = await listBlocks(projectId);
+  const content = await getProjectContent(projectId);
+  if (!content) notFound();
 
   return (
     <div className={styles.page}>
       <PageHeader title={project.title} description={project.description ?? undefined} />
-      <BlocksSection
+      <ProjectContentView
         projectId={projectId}
-        blocks={blocks}
-        canAddBlocks={project.viewerRole !== 'viewer'}
+        initialContent={content}
+        canEdit={project.viewerRole !== 'viewer'}
       />
       <ProjectSettingsForm project={project} />
     </div>
