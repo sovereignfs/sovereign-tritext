@@ -12,7 +12,7 @@ Chronological build index — one row per PR. Concept/plan live in
 | 3     | Lexical editor + autosave         | ✅     | [F3](CLAUDE.md#functional-requirements)                            |
 | 4     | Block groups + drag reorder       | ✅     | [F2, F4](CLAUDE.md#functional-requirements)                        |
 | 5     | Collaborators via `sdk.directory` | ✅     | [F5, Collaborator model](CLAUDE.md#collaborator-model)             |
-| 6     | Linting engine port               | 📋     | [F6](CLAUDE.md#functional-requirements)                            |
+| 6     | Linting engine                    | ✅     | [F6](CLAUDE.md#functional-requirements)                            |
 | 7     | DOCX export                       | 📋     | [F7](CLAUDE.md#functional-requirements)                            |
 | 8     | Custom fonts via `sdk.storage`    | 📋     | [F8, Custom fonts](CLAUDE.md#custom-fonts)                         |
 | 9     | Monetization (paywall)            | 📋     | [F9, Monetization](CLAUDE.md#monetization)                         |
@@ -254,15 +254,49 @@ same "Si"/"Ta"/"En" labels).
 
 ---
 
-#### 📋 Phase 6 — Linting engine port
+#### ✅ Phase 6 — Linting engine
 
 **Goal:** Structure/semantic cross-language consistency checks, surfaced in
 a lint panel.
 
-**Deliverables:** ported `LintEngine`/`rules/structure.ts`/`rules/semantic.ts`
-+ their test suite, `LintPanel` UI.
+**Deliverables:**
+
+- `app/_lib/lint/engine.ts` + `rules/structure.ts` + `rules/semantic.ts` — no
+  prototype source exists to port from (same situation as Phase 3's editor;
+  see CLAUDE.md's "Ported from the prototype"), so the engine is a fresh,
+  from-spec implementation. Structure rules (`empty-language`,
+  `block-count-mismatch`, `heading-mismatch`) compare each language's
+  Lexical document shape via `parseTree.ts`; semantic rules
+  (`length-ratio-outlier`, `placeholder-text`) are content-length/pattern
+  heuristics — no external NLP or translation-quality service
+- `app/_lib/lint/__tests__/engine.test.ts` — 18-case Vitest suite (one rule
+  at a time, plus aggregate `lintBlock` behavior); the "ported ... test
+  suite" deliverable, freshly written for the same reason as the engine
+- `app/_components/LintPanel.tsx` — renders in `BlockEditorView`, recomputed
+  live from each pane's in-memory content on every keystroke (no debounce,
+  no network round-trip — it's pure JS over content the editors already
+  hold), independent of the debounced autosave cycle
+- `BlockSummary.issueCount` (`_lib/blockSummary.ts`) — same engine run
+  server-side in `toBlockSummary`, surfaced as a small warning badge on each
+  block's row in the project's content list, so problem blocks are visible
+  without opening each one
+- `extractFullText` split out of `extractPlainText` (`_lib/editor/plainText.ts`)
+  — the semantic rules need untruncated text; the old function always
+  truncated to a preview length
 
 **Dependencies:** Phase 3 editor (needs real block content to lint)
+
+**Review checklist:**
+
+- ✅ `pnpm typecheck` / `eslint` / `prettier --check` all pass
+- ✅ `pnpm vitest run` — 18/18 passing
+- ✅ Verified live: opened a block with Sinhala/English empty and Tamil
+  filled, confirmed the panel showed 2 `empty-language` issues with correct
+  per-language messages; typed into the empty Sinhala pane and watched the
+  panel drop to 1 issue *before* the "Saved" indicator appeared (proving
+  linting isn't gated on autosave); reloaded the project page and confirmed
+  the block's list-row badge read "1 issue", matching the server-computed
+  `issueCount`
 
 ---
 

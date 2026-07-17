@@ -2,6 +2,7 @@ import { and, eq, isNull, type SQL } from 'drizzle-orm';
 import type { Access, Db, Language } from './access';
 import { contentBlocks } from './db/schema';
 import { extractPlainText } from './editor/plainText';
+import { lintBlock } from './lint/engine';
 
 /**
  * Plain (non-`'use server'`) helpers shared by `blocks-actions.ts` and
@@ -20,6 +21,7 @@ export interface BlockSummary {
   orderNumber: number;
   updatedAt: number;
   preview: string;
+  issueCount: number;
 }
 
 /** Matches `content_blocks.group_id` — `null` means the ungrouped bucket. */
@@ -38,6 +40,7 @@ export function toBlockSummary(row: BlockRow, access: Access): BlockSummary {
     english: row.englishText,
   };
   const text = byLanguage[primaryLanguage] ?? row.sinhalaText ?? row.tamilText ?? row.englishText;
+  const enabledLanguages = JSON.parse(access.project.enabledLanguages) as Language[];
   return {
     id: row.id,
     groupId: row.groupId,
@@ -46,6 +49,7 @@ export function toBlockSummary(row: BlockRow, access: Access): BlockSummary {
     orderNumber: row.orderNumber,
     updatedAt: row.updatedAt,
     preview: extractPlainText(text) || 'Empty block',
+    issueCount: lintBlock({ enabledLanguages, content: byLanguage }).length,
   };
 }
 

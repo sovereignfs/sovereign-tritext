@@ -6,6 +6,7 @@ import type { Language } from '../_lib/access';
 import { autosaveBlockContentAction, type BlockDetail } from '../blocks-actions';
 import editorStyles from './editor/editor.module.css';
 import { RichTextEditor } from './editor/RichTextEditor';
+import { LintPanel } from './LintPanel';
 import styles from '../tritext.module.css';
 
 const LANGUAGE_LABEL: Record<Language, string> = {
@@ -32,7 +33,15 @@ function SaveStatusLabel({ state }: { state: SaveState }) {
   );
 }
 
-function LanguagePane({ block, language }: { block: BlockDetail; language: Language }) {
+function LanguagePane({
+  block,
+  language,
+  onLiveChange,
+}: {
+  block: BlockDetail;
+  language: Language;
+  onLiveChange: (language: Language, json: string) => void;
+}) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editable = block.editableLanguages.includes(language);
@@ -50,6 +59,14 @@ function LanguagePane({ block, language }: { block: BlockDetail; language: Langu
     [block.id, block.projectId, language],
   );
 
+  const handleChange = useCallback(
+    (json: string) => {
+      onLiveChange(language, json);
+      scheduleSave(json);
+    },
+    [language, onLiveChange, scheduleSave],
+  );
+
   return (
     <div className={styles.languagePane}>
       <div className={styles.languagePaneHeader}>
@@ -62,7 +79,7 @@ function LanguagePane({ block, language }: { block: BlockDetail; language: Langu
         placeholder={editable ? `Write ${LANGUAGE_LABEL[language]} content…` : 'No content yet.'}
         initialValue={block.content[language]}
         editable={editable}
-        onChange={scheduleSave}
+        onChange={handleChange}
       />
     </div>
   );
@@ -75,33 +92,57 @@ export function BlockEditorView({ block }: { block: BlockDetail }) {
   const first = languages[0];
   const second = languages[1];
 
-  if (languages.length >= 3) {
+  // Live mirror of every pane's latest content, fed to LintPanel — updated
+  // on every editor change, ahead of the debounced autosave, since linting
+  // is pure in-memory JS with no network round-trip to wait for.
+  const [liveContent, setLiveContent] = useState<Record<Language, string | null>>(block.content);
+  const handleLiveChange = useCallback((language: Language, json: string) => {
+    setLiveContent((prev) => ({ ...prev, [language]: json }));
+  }, []);
+
+  const panes = (() => {
+    if (languages.length >= 3) {
+      return (
+        <div
+          className={styles.multiPane}
+          style={{ '--tritext-pane-count': languages.length } as CSSProperties}
+        >
+          {languages.map((language) => (
+            <LanguagePane
+              key={language}
+              block={block}
+              language={language}
+              onLiveChange={handleLiveChange}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (languages.length === 2 && first && second) {
+      return (
+        <SplitPane
+          primaryLabel={LANGUAGE_LABEL[first]}
+          secondaryLabel={LANGUAGE_LABEL[second]}
+          primary={<LanguagePane block={block} language={first} onLiveChange={handleLiveChange} />}
+          secondary={
+            <LanguagePane block={block} language={second} onLiveChange={handleLiveChange} />
+          }
+        />
+      );
+    }
+
     return (
-      <div
-        className={styles.multiPane}
-        style={{ '--tritext-pane-count': languages.length } as CSSProperties}
-      >
-        {languages.map((language) => (
-          <LanguagePane key={language} block={block} language={language} />
-        ))}
+      <div className={styles.singlePane}>
+        {first && <LanguagePane block={block} language={first} onLiveChange={handleLiveChange} />}
       </div>
     );
-  }
-
-  if (languages.length === 2 && first && second) {
-    return (
-      <SplitPane
-        primaryLabel={LANGUAGE_LABEL[first]}
-        secondaryLabel={LANGUAGE_LABEL[second]}
-        primary={<LanguagePane block={block} language={first} />}
-        secondary={<LanguagePane block={block} language={second} />}
-      />
-    );
-  }
+  })();
 
   return (
-    <div className={styles.singlePane}>
-      {first && <LanguagePane block={block} language={first} />}
+    <div className={styles.blockEditorBody}>
+      <LintPanel enabledLanguages={languages} content={liveContent} />
+      {panes}
     </div>
   );
 }

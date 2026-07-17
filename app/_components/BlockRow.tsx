@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { DragHandleRow, Select } from '@sovereignfs/ui';
+import { DragHandleRow, Icon, Select } from '@sovereignfs/ui';
 import type { BlockSummary } from '../_lib/blockSummary';
 import { moveBlockToGroupAction } from '../groups-actions';
 import styles from '../tritext.module.css';
@@ -41,7 +41,15 @@ export function BlockRow({
         <div className={styles.blockRowContent}>
           <Link href={`/tritext/${projectId}/blocks/${block.id}`} className={styles.blockLink}>
             <p className={styles.blockPreview}>{block.preview}</p>
-            <p className={styles.blockMeta}>Status: {block.status}</p>
+            <p className={styles.blockMeta}>
+              Status: {block.status}
+              {block.issueCount > 0 && (
+                <span className={styles.issueBadge}>
+                  <Icon name="alert-triangle" size="xs" aria-hidden />
+                  {block.issueCount} {block.issueCount === 1 ? 'issue' : 'issues'}
+                </span>
+              )}
+            </p>
           </Link>
           {canEdit && groupOptions.length > 0 && (
             <Select
