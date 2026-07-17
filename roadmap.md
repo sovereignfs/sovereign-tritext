@@ -11,7 +11,7 @@ Chronological build index — one row per PR. Concept/plan live in
 | 2     | Project CRUD + shell UI           | ✅     | [F1](CLAUDE.md#functional-requirements)                            |
 | 3     | Lexical editor + autosave         | ✅     | [F3](CLAUDE.md#functional-requirements)                            |
 | 4     | Block groups + drag reorder       | ✅     | [F2, F4](CLAUDE.md#functional-requirements)                        |
-| 5     | Collaborators via `sdk.directory` | 📋     | [F5, Collaborator model](CLAUDE.md#collaborator-model)             |
+| 5     | Collaborators via `sdk.directory` | ✅     | [F5, Collaborator model](CLAUDE.md#collaborator-model)             |
 | 6     | Linting engine port               | 📋     | [F6](CLAUDE.md#functional-requirements)                            |
 | 7     | DOCX export                       | 📋     | [F7](CLAUDE.md#functional-requirements)                            |
 | 8     | Custom fonts via `sdk.storage`    | 📋     | [F8, Custom fonts](CLAUDE.md#custom-fonts)                         |
@@ -195,16 +195,62 @@ by `blocks-actions.ts` and `groups-actions.ts`.
 
 ---
 
-#### 📋 Phase 5 — Collaborators via `sdk.directory`
+#### ✅ Phase 5 — Collaborators via `sdk.directory`
 
 **Goal:** Add/remove project collaborators and manage per-language edit
 permissions, without an in-plugin invite/email flow.
 
-**Deliverables:** `project_members` UI, `sdk.directory.searchUsers`/
-`resolveUsers` integration, permission checks in every mutating server
-action (not just the UI).
+**Deliverables:**
+
+- `app/members-actions.ts` — `getProjectMembers` (resolves owner + every
+  member's display name/email via one batched `sdk.directory.resolveUsers`
+  call), `searchProjectDirectoryUsers` (`sdk.directory.searchUsers`,
+  gated by any project access), `inviteMemberAction` (resolves the picked
+  id against the directory before inserting — never trusts a raw client
+  id; updates in place if already a member), `updateMemberAction` (inline
+  role/per-language-flag edits), `removeMemberAction` — every mutating
+  action gated by `owner`/`admin` project role, re-checked server-side
+  (not just hidden in the UI)
+- `app/_lib/notify.ts` — best-effort `notifyUser` (mirrors
+  `sovereign-plainwrite`'s own helper): a new member gets a
+  `sdk.notifications.send()` notification, never email
+- `app/_components/InviteMemberForm.tsx` — name/email typeahead backed by
+  `searchProjectDirectoryUsers` (ported from `sovereign-plainwrite`'s
+  `InviteMemberForm`), role select, and per-language "Can edit" checkboxes
+  shown only for the `editor` role
+- `app/_components/MembersSection.tsx` — owner line (read-only) + member
+  rows with live-editable role/per-language flags (same direct-call-on-change
+  pattern as Phase 4's block "Move to" select) and a remove button, gated by
+  `canManage`; a read-only row (no controls) for non-owner/non-admin viewers
 
 **Dependencies:** Phase 2 shell
+
+**Review checklist:**
+
+- ✅ `pnpm typecheck` / `eslint` / `prettier --check` all pass
+- ✅ Verified live with a real second seeded user
+  (`admin@sovereign.local`): searched and invited as Editor with
+  Sinhala-only edit access; confirmed the notification arrived (bell badge
+  showed "1 unread"); confirmed persistence across reload; changed role to
+  Admin (per-language checkboxes correctly disappeared) and removed the
+  member, both persisting correctly
+- ✅ Verified permission gating end-to-end by logging in as the invited
+  editor: People section rendered read-only (no invite form, no role
+  select, no remove button); the block editor correctly made only the
+  Sinhala pane editable (`contenteditable="true"`) with Tamil/English
+  read-only — this is `canEditLanguage` (built in Phase 3) being exercised
+  for the first time by a real non-owner collaborator
+
+**Discovered during this phase** (see CLAUDE.md Decision Log): `@sovereignfs/ui`'s
+`Checkbox` defaults its DOM `id` to `checkbox-${label}` when no `id` prop is
+given. Two unrelated checkbox groups sharing a label on the same page (here:
+`InviteMemberForm`'s new "Can edit → Sinhala/Tamil/English" checkboxes and
+`ProjectSettingsForm`'s pre-existing "Enabled languages" checkboxes, both
+rendered on the project detail page) silently collide on duplicate DOM ids.
+Fixed by passing explicit unique `id`s to every `Checkbox` added in this
+phase (`invite-can-edit-*`, and `member-${userId}-can-edit-*` — the latter
+also needed per-member uniqueness, since multiple `MemberRow`s render the
+same "Si"/"Ta"/"En" labels).
 
 ---
 

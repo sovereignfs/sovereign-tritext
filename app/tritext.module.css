@@ -297,3 +297,105 @@
   flex-shrink: 0;
   width: 10rem;
 }
+
+.ownerLine {
+  font-size: var(--sv-font-size-sm);
+  color: var(--sv-color-text-muted);
+  margin: 0;
+}
+
+.memberList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sv-space-2);
+}
+
+.memberRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sv-space-3);
+  padding: var(--sv-space-2) var(--sv-space-3);
+  border: 1px solid var(--sv-color-border);
+  border-radius: var(--sv-radius-md);
+  background-color: var(--sv-color-surface);
+}
+
+.memberIdentity {
+  flex: 1;
+  min-width: 0;
+}
+
+.memberIdentity strong {
+  display: block;
+  font-size: var(--sv-font-size-sm);
+  color: var(--sv-color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memberEmail {
+  font-size: var(--sv-font-size-xs);
+  color: var(--sv-color-text-muted);
+  margin: 0;
+}
+
+.memberLanguageFlags {
+  display: flex;
+  align-items: center;
+  gap: var(--sv-space-2);
+  flex-shrink: 0;
+}
+
+.memberRoleLabel {
+  font-size: var(--sv-font-size-sm);
+  color: var(--sv-color-text-muted);
+  text-transform: capitalize;
+}
+
+.inviteForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sv-space-3);
+  padding-top: var(--sv-space-2);
+}
+
+.memberPicker {
+  position: relative;
+  min-width: 16rem;
+}
+
+.memberResults {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + var(--sv-space-1));
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: var(--sv-space-1);
+  border: 1px solid var(--sv-color-border);
+  border-radius: var(--sv-radius-md);
+  background-color: var(--sv-color-surface-raised);
+  box-shadow: var(--sv-shadow-popover);
+}
+
+.memberResults button {
+  display: block;
+  width: 100%;
+  padding: var(--sv-space-2);
+  border: none;
+  border-radius: var(--sv-radius-sm);
+  background: transparent;
+  color: var(--sv-color-text-primary);
+  font-size: var(--sv-font-size-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.memberResults button:hover {
+  background-color: var(--sv-color-accent-subtle);
+}
