@@ -474,3 +474,14 @@
   align-items: center;
   gap: var(--sv-space-2);
 }
+
+.fileInput {
+  display: block;
+  width: 100%;
+  padding: var(--sv-space-2);
+  border: 1px solid var(--sv-color-border);
+  border-radius: var(--sv-radius-md);
+  background-color: var(--sv-color-surface);
+  color: var(--sv-color-text-primary);
+  font-size: var(--sv-font-size-sm);
+}

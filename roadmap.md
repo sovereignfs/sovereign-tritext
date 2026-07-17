@@ -14,7 +14,7 @@ Chronological build index — one row per PR. Concept/plan live in
 | 5     | Collaborators via `sdk.directory` | ✅     | [F5, Collaborator model](CLAUDE.md#collaborator-model)             |
 | 6     | Linting engine                    | ✅     | [F6](CLAUDE.md#functional-requirements)                            |
 | 7     | DOCX export                       | ✅     | [F7](CLAUDE.md#functional-requirements)                            |
-| 8     | Custom fonts via `sdk.storage`    | 📋     | [F8, Custom fonts](CLAUDE.md#custom-fonts)                         |
+| 8     | Custom fonts via `sdk.storage`    | ✅     | [F8, Custom fonts](CLAUDE.md#custom-fonts)                         |
 | 9     | Monetization (paywall)            | 📋     | [F9, Monetization](CLAUDE.md#monetization)                         |
 | 10    | Polish, tests, docs               | 📋     | —                                                                  |
 
@@ -353,14 +353,54 @@ a lint panel.
 
 ---
 
-#### 📋 Phase 8 — Custom fonts via `sdk.storage`
+#### ✅ Phase 8 — Custom fonts via `sdk.storage`
 
 **Goal:** Admin-managed webfont upload/serving for Sinhala/Tamil scripts.
 
-**Deliverables:** upload UI, `sdk.storage.put`/`getSignedUrl`/`list`/`delete`
-wiring, `@font-face` injection.
+**Deliverables:**
+
+- `app/fonts-actions.ts` — `listFontsForManagement` (all fonts + `canManage`,
+  gated by the same project-owner/admin check as Members), `uploadFontAction`
+  (validates extension `.woff2`/`.woff`/`.ttf`/`.otf`, 5 MB max, and a
+  `familyName` charset restricted to what's safe to interpolate unescaped
+  into CSS — see "Discovered during this phase"), `toggleFontActiveAction`,
+  `deleteFontAction` (removes the `sdk.storage` object *and* the DB row —
+  `custom_fonts.storage_key` never left orphaned), `listActiveFontsForFontFace`
+  (no project gating — every tenant member reads the shared font library)
+- `app/_lib/fontFace.ts` — `guessFontFormat` (extension → CSS `format()`
+  hint) and `fontFaceCss`, pure and unit-tested-by-construction (no DB, no
+  React)
+- `app/layout.tsx` — new for this phase; fetches active fonts and injects a
+  bare `<style>{fontFaceCss(...)}</style>` ahead of `{children}`, no wrapping
+  element, so it can't affect any existing page's own layout/spacing
+- `app/_components/FontsSection.tsx` — upload form (file input, family
+  name, display name, script checkboxes) + font list with a live
+  Active/inactive toggle and Remove, gated by `canManage`; readers with no
+  manage access see nothing if the library is empty, or a read-only list if
+  not
 
 **Dependencies:** Phase 5 (uses the same project-admin role check)
+
+**Review checklist:**
+
+- ✅ `pnpm typecheck` / `eslint` / `prettier --check` all pass
+- ✅ Verified live: uploaded a font (file input driven via the DOM
+  `DataTransfer` API, since this session's browser-automation tool can't
+  drive a native OS file picker), confirmed it appeared in the management
+  list and its `@font-face` rule was injected into the page with a real
+  `sdk.storage` signed URL; fetched that URL directly and confirmed it
+  served the uploaded bytes with the correct `content-type`; toggled the
+  font inactive, reloaded, and confirmed the `@font-face` rule disappeared
+  while the font stayed listed (inactive, not deleted); clicked Remove and
+  confirmed it's gone from the list
+
+**Discovered during this phase**: `familyName` flows into `app/layout.tsx`'s
+injected `<style>` tag via `dangerouslySetInnerHTML`-equivalent (a `<style>`
+child string) with no CSS-string-escaping mechanism available — React
+doesn't sanitize style-tag text content the way it does HTML attributes.
+`uploadFontAction` restricts `familyName` to `/^[a-zA-Z0-9 _-]+$/` at
+write time specifically to close this off, not just for cosmetic
+CSS-identifier validity.
 
 ---
 
