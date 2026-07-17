@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { sdk } from '@sovereignfs/sdk';
 import { PageHeader } from '@sovereignfs/ui';
+import type { Language } from '../_lib/access';
+import { ExportSection } from '../_components/ExportSection';
 import { MembersSection } from '../_components/MembersSection';
 import { ProjectContentView } from '../_components/ProjectContentView';
 import { ProjectSettingsForm } from '../_components/ProjectSettingsForm';
@@ -37,6 +39,10 @@ export default async function ProjectDetailPage({ params }: Props) {
         members={projectMembers.members}
         canManage={projectMembers.canManage}
         directoryLookupFailed={projectMembers.directoryLookupFailed}
+      />
+      <ExportSection
+        projectId={projectId}
+        enabledLanguages={project.enabledLanguages as Language[]}
       />
       <ProjectSettingsForm project={project} />
     </div>

@@ -13,7 +13,7 @@ Chronological build index — one row per PR. Concept/plan live in
 | 4     | Block groups + drag reorder       | ✅     | [F2, F4](CLAUDE.md#functional-requirements)                        |
 | 5     | Collaborators via `sdk.directory` | ✅     | [F5, Collaborator model](CLAUDE.md#collaborator-model)             |
 | 6     | Linting engine                    | ✅     | [F6](CLAUDE.md#functional-requirements)                            |
-| 7     | DOCX export                       | 📋     | [F7](CLAUDE.md#functional-requirements)                            |
+| 7     | DOCX export                       | ✅     | [F7](CLAUDE.md#functional-requirements)                            |
 | 8     | Custom fonts via `sdk.storage`    | 📋     | [F8, Custom fonts](CLAUDE.md#custom-fonts)                         |
 | 9     | Monetization (paywall)            | 📋     | [F9, Monetization](CLAUDE.md#monetization)                         |
 | 10    | Polish, tests, docs               | 📋     | —                                                                  |
@@ -300,13 +300,56 @@ a lint panel.
 
 ---
 
-#### 📋 Phase 7 — DOCX export
+#### ✅ Phase 7 — DOCX export
 
 **Goal:** Export a project to a DOCX file, per-language or per-section.
 
-**Deliverables:** server action wrapping the ported `generateDocx.ts` logic.
+**Deliverables:**
+
+- `app/_lib/docx/lexicalToDocx.ts` — Lexical JSON → `docx` `Paragraph[]`
+  (headings, quotes, one level of nested bulleted lists, bold/italic/underline
+  runs), plus a pre-editor plain-text fallback. No prototype source exists to
+  port from (same situation as Phases 3 and 6), so built fresh from spec
+- `app/_lib/docx/generateDocx.ts` — `generateProjectDocx`, pure and
+  DB-independent: `per-language` produces one language's content across every
+  section (a publishable single-language document); `per-section` shows every
+  enabled language together under each block (for side-by-side review)
+- `app/_lib/docx/exportData.ts` — assembles a project's groups/blocks into
+  export-ready sections (ordered, empty groups dropped), the one piece that
+  does touch the DB
+- `app/export/[projectId]/route.ts` — a plugin-owned Route Handler (`GET`),
+  gated by the normal session middleware like any page — streams the
+  generated buffer with `Content-Disposition: attachment`. Chosen over a
+  Server Action + base64 + client-side Blob dance: Server Actions can't set
+  response headers, and a plain top-level navigation to a URL that returns
+  `Content-Disposition: attachment` triggers a download without leaving the
+  current page — no JS blob-URL plumbing needed
+- `app/_components/ExportSection.tsx` — layout choice, a language select
+  (shown only for the per-language layout, defaulting to the project's
+  primary language), and a "Download .docx" button
+- `app/_lib/docx/__tests__/generateDocx.test.ts` — 12-case Vitest suite; the
+  "ported ... logic" deliverable, freshly written for the same reason as the
+  generator itself. Asserts on the real generated XML (unzipped via `jszip`
+  — `docx`'s own `Packer.toString` returns the raw packed ZIP bytes, not
+  readable XML, so unzipping is the only way to verify content), not just
+  paragraph counts
 
 **Dependencies:** Phase 4 (export needs stable ordering)
+
+**Review checklist:**
+
+- ✅ `pnpm typecheck` / `eslint` / `prettier --check` all pass
+- ✅ `pnpm vitest run` — 30/30 passing (12 new + 18 from Phase 6)
+- ✅ Verified live: fetched `/tritext/export/<id>?layout=per-section` and
+  `?layout=per-language&language=tamil` directly — both returned `200`, the
+  correct `Content-Type`, a `Content-Disposition` with a sane filename, and a
+  body starting with the ZIP magic number (`504b0304`); confirmed
+  `?layout=per-language` with no `language` returns `400` with a clear error;
+  clicked "Download .docx" in the actual UI and confirmed the browser
+  performed the download (a `200 OK` request reported as
+  `net::ERR_ABORTED` — the correct, expected signature of a browser
+  intercepting an attachment response as a download rather than a page
+  navigation, not a real failure)
 
 ---
 
