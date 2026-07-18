@@ -18,6 +18,7 @@ Chronological build index — one row per PR. Concept/plan live in
 | 9     | Monetization (paywall)            | ✅     | [F9, Monetization](CLAUDE.md#monetization)                         |
 | 10    | Polish, tests, docs               | ✅     | —                                                                  |
 | 11    | UI polish and corner-case review  | ✅     | —                                                                  |
+| 12    | Design-system font input          | ✅     | —                                                                  |
 
 ---
 
@@ -547,3 +548,47 @@ and the `is*Locked` columns on `content_blocks` are also unused dead schema
 this plugin's own SPEC.md (unlike status, which SPEC explicitly promises).
 Left alone rather than building three more speculative features into a
 polish pass; a future task should either wire them up or drop the columns.
+
+---
+
+#### ✅ Phase 12 — Design-system font input
+
+**Goal:** Replace the raw native `<input type="file">` in the font-upload
+form with a component that matches the rest of the design system, instead
+of a plugin-local styling hack.
+
+**Deliverables:**
+
+- The font-upload form's file field now uses `@sovereignfs/ui`'s new
+  `FileDropzone` component (a styled drag-and-drop dropzone) instead of a
+  bare `<input type="file" className={styles.fileInput}>` — which
+  previously rendered as the unstyled browser-default "Choose File" button.
+- `FileDropzone` itself is a new addition to the platform's design system
+  (`packages/ui`, out-of-tree from this repo — see the platform monorepo's
+  own PR), extracted from a pattern the Account plugin had already
+  hand-rolled for its ZIP import/restore flow. Two plugins independently
+  needed the same "styled dropzone wrapping a hidden native file input"
+  shape; per the platform's DS-first policy this belonged in
+  `packages/ui`, not duplicated a third time in this repo.
+- `app/tritext.module.css`'s now-unused `.fileInput` class removed.
+
+**Dependencies:** none technically, but the design-system component had to
+land in the platform repo first
+
+**Review checklist:**
+
+- ✅ `pnpm typecheck` / `eslint` / `prettier --check` all pass
+- ✅ `pnpm vitest run` — 61/61 passing (no test changes needed; this phase
+  only swaps a form field's markup)
+- ✅ Verified live: the font-upload dropzone renders identically in style
+  to the Account plugin's ZIP import dropzone; picking a file updates the
+  dropzone's label/hint to the filename/size; submitting the form
+  (`name="file"` on the underlying native input) reaches
+  `uploadFontAction` and creates the font row exactly as before
+
+**Discovered during this phase**: a dropped (drag-and-drop) file has to be
+written into the hidden `<input>`'s own `FileList` via the `DataTransfer`
+API for a native `<form action={...}>` submission to see it — otherwise
+only the component's own `onFileSelect` callback fires and the file never
+reaches the Server Action's `FormData`. `FileDropzone` handles this
+internally; it isn't something this plugin has to know about.

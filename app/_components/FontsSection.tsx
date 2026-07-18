@@ -2,7 +2,15 @@
 
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Checkbox, EmptyState, FormField, Input, useToast } from '@sovereignfs/ui';
+import {
+  Button,
+  Checkbox,
+  EmptyState,
+  FileDropzone,
+  FormField,
+  Input,
+  useToast,
+} from '@sovereignfs/ui';
 import type { Language } from '../_lib/access';
 import {
   deleteFontAction,
@@ -98,6 +106,7 @@ function UploadFontForm({
   );
   const formRef = useRef<HTMLFormElement>(null);
   const [scripts, setScripts] = useState<ReadonlySet<Language>>(new Set());
+  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!state) return;
@@ -105,6 +114,7 @@ function UploadFontForm({
       toast.show({ title: state.message, category: 'success' });
       formRef.current?.reset();
       setScripts(new Set());
+      setFile(null);
       onUploaded();
     } else {
       toast.show({ title: state.error, category: 'error' });
@@ -113,18 +123,14 @@ function UploadFontForm({
 
   return (
     <form ref={formRef} action={formAction} className={styles.uploadForm}>
-      <FormField label="Font file" hint=".woff2, .woff, .ttf, or .otf — max 5 MB">
-        {(field) => (
-          <input
-            {...field}
-            type="file"
-            name="file"
-            accept=".woff2,.woff,.ttf,.otf"
-            required
-            className={styles.fileInput}
-          />
-        )}
-      </FormField>
+      <FileDropzone
+        name="file"
+        ariaLabel="Upload font file"
+        accept=".woff2,.woff,.ttf,.otf"
+        label={file ? file.name : 'Choose a font file'}
+        hint={file ? `${(file.size / 1024).toFixed(0)} KB` : '.woff2, .woff, .ttf, or .otf — max 5 MB'}
+        onFileSelect={setFile}
+      />
       <FormField label="Family name" hint="CSS font-family — letters, numbers, spaces, - or _">
         {(field) => <Input {...field} name="familyName" required />}
       </FormField>
