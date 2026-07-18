@@ -13,21 +13,21 @@ admin-managed custom webfonts for Sinhala/Tamil scripts.
 
 ## Status
 
-Early scaffold. See the phase breakdown below — each phase lands as its own
-branch/PR in this repo.
+Feature-complete and monetized. See the phase breakdown below — each phase
+landed as its own branch/PR in this repo.
 
 - [x] Phase 0 — scaffold (manifest, package.json, tsconfig, starter page)
 - [x] Phase 1 — isolated DB schema (projects, content_block_groups,
       content_blocks, project_members, custom_fonts)
 - [x] Phase 2 — project CRUD + shell UI
-- [ ] Phase 3 — Lexical editor + autosave
-- [ ] Phase 4 — block groups + drag reorder
-- [ ] Phase 5 — collaborators via `sdk.directory`
-- [ ] Phase 6 — linting engine port
-- [ ] Phase 7 — DOCX export
-- [ ] Phase 8 — custom fonts via `sdk.storage`
-- [ ] Phase 9 — monetization (paywall)
-- [ ] Phase 10 — polish, tests, docs
+- [x] Phase 3 — Lexical editor + autosave
+- [x] Phase 4 — block groups + drag reorder
+- [x] Phase 5 — collaborators via `sdk.directory`
+- [x] Phase 6 — linting engine port
+- [x] Phase 7 — DOCX export
+- [x] Phase 8 — custom fonts via `sdk.storage`
+- [x] Phase 9 — monetization (paywall)
+- [x] Phase 10 — polish, tests, docs
 
 ## Documentation
 
@@ -59,3 +59,53 @@ Once ready to distribute standalone, other Sovereign instances install it via
 their own `sovereign.plugins.json` + `pnpm install:plugins`, pointed at this
 repo's real URL (update the placeholder `repository` field in
 `manifest.json` first — required for `type: "sovereign"`).
+
+## Self-hosting Tritext on your own Sovereign instance
+
+Tritext is a `type: "sovereign"` plugin distributed as its own git
+repository, not something bundled with the platform. To install it on a
+self-hosted Sovereign instance:
+
+1. Add an entry pointing at this repo to your instance's
+   `sovereign.plugins.json` (see the platform repo's
+   [`docs/self-hosting.md`](https://github.com/sovereignfs/sovereign/blob/main/docs/self-hosting.md)
+   for the file's exact shape).
+2. Run `pnpm install:plugins` at the platform root — this clones the repo
+   into `plugins/`, matching the manifest's declared `id`
+   (`com.mooniak.tritext`).
+3. Rebuild/restart the platform (`pnpm build` in production, or restart
+   `pnpm dev` locally) so the plugin is composed into the runtime and
+   `/tritext` is served.
+4. Grant the instance's users access to the app from the platform's admin
+   console (Console plugin → Apps), same as any other installed plugin.
+
+### License activation
+
+Tritext is monetized as a **one-time purchase** (RFC 0003 in the platform
+repo — see [CLAUDE.md → Monetization](CLAUDE.md#monetization)). After
+installing, `/tritext` shows a paywall until a valid license token is
+activated:
+
+1. Purchase a license from the plugin author (contact info in this repo's
+   listing — Tritext has no in-app payment flow; RFC 0003 plugins are
+   licensed out-of-band).
+2. On the paywall page, paste the license token you received into the
+   "Activate license" field and submit.
+3. The platform verifies the token's signature offline against the public
+   key declared in `manifest.json` — no network call to any Tritext or
+   Sovereign server is made. Once verified, `/tritext` is unlocked for that
+   instance.
+
+No plugin-side configuration is required for licensing; it's entirely
+enforced by the platform reading `manifest.json`'s `monetization` block.
+
+### Requirements
+
+- A Sovereign platform instance already running (see the platform repo's
+  own `docs/self-hosting.md` for that setup — Docker Compose, env vars,
+  database).
+- No additional environment variables or external services — Tritext uses
+  only `sdk.db` (isolated store, auto-provisioned on install),
+  `sdk.storage` (custom fonts), `sdk.directory` (collaborator lookup), and
+  `sdk.notifications` (collaborator-added notices), all already provided by
+  the host platform.

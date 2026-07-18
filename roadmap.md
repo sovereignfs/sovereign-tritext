@@ -15,8 +15,8 @@ Chronological build index — one row per PR. Concept/plan live in
 | 6     | Linting engine                    | ✅     | [F6](CLAUDE.md#functional-requirements)                            |
 | 7     | DOCX export                       | ✅     | [F7](CLAUDE.md#functional-requirements)                            |
 | 8     | Custom fonts via `sdk.storage`    | ✅     | [F8, Custom fonts](CLAUDE.md#custom-fonts)                         |
-| 9     | Monetization (paywall)            | 📋     | [F9, Monetization](CLAUDE.md#monetization)                         |
-| 10    | Polish, tests, docs               | 📋     | —                                                                  |
+| 9     | Monetization (paywall)            | ✅     | [F9, Monetization](CLAUDE.md#monetization)                         |
+| 10    | Polish, tests, docs               | ✅     | —                                                                  |
 
 ---
 
@@ -445,10 +445,37 @@ ceremony.
 
 ---
 
-#### 📋 Phase 10 — Polish, tests, docs
+#### ✅ Phase 10 — Polish, tests, docs
 
 **Goal:** Ready for real use.
 
-**Deliverables:** ported vitest suites (5 from the prototype, plus new
-coverage for anything Sovereign-specific), final README, self-host install
-notes for other Sovereign instances.
+**Deliverables:**
+
+- New unit-test coverage for the pure, DB-independent Sovereign-specific
+  logic that had none: `app/_lib/__tests__/fontFace.test.ts` (`guessFontFormat`,
+  `fontFaceCss`), `app/_lib/editor/__tests__/plainText.test.ts`
+  (`extractFullText`, `extractPlainText`), `app/_lib/__tests__/access.test.ts`
+  (`canEditLanguage`'s owner/admin/editor/viewer matrix), and
+  `app/_lib/__tests__/blockSummary.test.ts` (`toBlockSummary`'s
+  primary-language/fallback preview logic and lint-issue counting) — bringing
+  the suite from 2 files/30 tests (Phases 6–7) to 6 files/57 tests
+- `README.md` status checklist updated to reflect all ten phases complete,
+  plus a new "Self-hosting Tritext on your own Sovereign instance" section
+  covering `sovereign.plugins.json` install steps and the license-activation
+  flow for other Sovereign operators
+
+**Dependencies:** Phase 9 (README's self-hosting section documents license
+activation, which needs a real paywall to describe)
+
+**Review checklist:**
+
+- ✅ `pnpm typecheck` / `eslint` / `prettier --check` all pass
+- ✅ `pnpm vitest run` — 57/57 passing (6 test files)
+
+**Discovered during this phase**: the "5 vitest suites ported from the
+prototype" deliverable as originally scoped assumed access to the "Tritext
+Content Hub" prototype's own source to port tests from — that source isn't
+available in this environment. Substituted with new coverage for this
+plugin's own pure logic modules that had none, which achieves the same
+goal (meaningful non-DB unit coverage of business logic) without a source
+to port from.
