@@ -1,9 +1,14 @@
 'use client';
 
 import { type CSSProperties, useCallback, useRef, useState } from 'react';
-import { SplitPane } from '@sovereignfs/ui';
+import { Select, SplitPane, useToast } from '@sovereignfs/ui';
 import type { Language } from '../_lib/access';
-import { autosaveBlockContentAction, type BlockDetail } from '../blocks-actions';
+import { BLOCK_STATUSES, type BlockStatus, STATUS_LABEL } from '../_lib/blockStatus';
+import {
+  autosaveBlockContentAction,
+  type BlockDetail,
+  updateBlockLanguageStatusAction,
+} from '../blocks-actions';
 import editorStyles from './editor/editor.module.css';
 import { RichTextEditor } from './editor/RichTextEditor';
 import { LintPanel } from './LintPanel';
@@ -42,9 +47,21 @@ function LanguagePane({
   language: Language;
   onLiveChange: (language: Language, json: string) => void;
 }) {
+  const toast = useToast();
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [status, setStatus] = useState<BlockStatus>(block.statusByLanguage[language]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editable = block.editableLanguages.includes(language);
+
+  async function handleStatusChange(next: BlockStatus) {
+    const previous = status;
+    setStatus(next);
+    const result = await updateBlockLanguageStatusAction(block.projectId, block.id, language, next);
+    if (!result.ok) {
+      setStatus(previous);
+      toast.show({ title: result.error, category: 'error' });
+    }
+  }
 
   const scheduleSave = useCallback(
     (json: string) => {
@@ -71,7 +88,23 @@ function LanguagePane({
     <div className={styles.languagePane}>
       <div className={styles.languagePaneHeader}>
         <h2 className={styles.languagePaneTitle}>{LANGUAGE_LABEL[language]}</h2>
-        <SaveStatusLabel state={saveState} />
+        <div className={styles.languagePaneHeaderRight}>
+          <SaveStatusLabel state={saveState} />
+          <Select
+            size="sm"
+            aria-label={`${LANGUAGE_LABEL[language]} status`}
+            value={status}
+            disabled={!editable}
+            onChange={(e) => void handleStatusChange(e.target.value as BlockStatus)}
+            className={styles.statusSelect}
+          >
+            {BLOCK_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_LABEL[s]}
+              </option>
+            ))}
+          </Select>
+        </div>
       </div>
       <RichTextEditor
         namespace={`${block.id}:${language}`}

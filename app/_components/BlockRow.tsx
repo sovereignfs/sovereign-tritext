@@ -5,6 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { DragHandleRow, Icon, Select } from '@sovereignfs/ui';
 import type { BlockSummary } from '../_lib/blockSummary';
+import { type BlockStatus, STATUS_LABEL } from '../_lib/blockStatus';
 import { moveBlockToGroupAction } from '../groups-actions';
 import styles from '../tritext.module.css';
 
@@ -42,7 +43,7 @@ export function BlockRow({
           <Link href={`/tritext/${projectId}/blocks/${block.id}`} className={styles.blockLink}>
             <p className={styles.blockPreview}>{block.preview}</p>
             <p className={styles.blockMeta}>
-              Status: {block.status}
+              Status: {STATUS_LABEL[block.status as BlockStatus] ?? block.status}
               {block.issueCount > 0 && (
                 <span className={styles.issueBadge}>
                   <Icon name="alert-triangle" size="xs" aria-hidden />

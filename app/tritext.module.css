@@ -142,6 +142,17 @@
   height: 24rem;
 }
 
+@media (max-width: 720px) {
+  .multiPane {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .multiPane .languagePane {
+    height: 24rem;
+  }
+}
+
 .languagePane {
   display: flex;
   flex-direction: column;
@@ -155,6 +166,17 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sv-space-2);
+}
+
+.languagePaneHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: var(--sv-space-2);
+  flex-shrink: 0;
+}
+
+.statusSelect {
+  width: auto;
 }
 
 .languagePaneTitle {
@@ -173,8 +195,18 @@
 
 .inlineForm {
   display: flex;
+  flex: 1 1 16rem;
   align-items: center;
   gap: var(--sv-space-2);
+}
+
+.inlineForm input {
+  flex: 1;
+  min-width: 0;
+}
+
+.inlineForm button {
+  flex-shrink: 0;
 }
 
 .groupList {
@@ -359,6 +391,21 @@
   align-items: flex-end;
   gap: var(--sv-space-3);
   padding-top: var(--sv-space-2);
+}
+
+/* Like .inviteForm, but for forms with fields of very different heights
+   (e.g. a multi-checkbox fieldset) — flex-end there bottom-aligns a short
+   submit button against a tall sibling, visually crowding its last row. */
+.uploadForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sv-space-3);
+  padding-top: var(--sv-space-2);
+}
+
+.uploadFormSubmit {
+  flex-basis: 100%;
 }
 
 .memberPicker {

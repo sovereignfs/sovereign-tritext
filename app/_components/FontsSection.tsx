@@ -112,7 +112,7 @@ function UploadFontForm({
   }, [state, toast, onUploaded]);
 
   return (
-    <form ref={formRef} action={formAction} className={styles.inviteForm}>
+    <form ref={formRef} action={formAction} className={styles.uploadForm}>
       <FormField label="Font file" hint=".woff2, .woff, .ttf, or .otf — max 5 MB">
         {(field) => (
           <input
@@ -152,7 +152,7 @@ function UploadFontForm({
           />
         ))}
       </fieldset>
-      <Button type="submit" size="sm" disabled={pending}>
+      <Button type="submit" size="sm" disabled={pending} className={styles.uploadFormSubmit}>
         {pending ? 'Uploading…' : 'Upload font'}
       </Button>
     </form>

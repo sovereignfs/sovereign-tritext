@@ -17,6 +17,7 @@ Chronological build index — one row per PR. Concept/plan live in
 | 8     | Custom fonts via `sdk.storage`    | ✅     | [F8, Custom fonts](CLAUDE.md#custom-fonts)                         |
 | 9     | Monetization (paywall)            | ✅     | [F9, Monetization](CLAUDE.md#monetization)                         |
 | 10    | Polish, tests, docs               | ✅     | —                                                                  |
+| 11    | UI polish and corner-case review  | ✅     | —                                                                  |
 
 ---
 
@@ -479,3 +480,70 @@ available in this environment. Substituted with new coverage for this
 plugin's own pure logic modules that had none, which achieves the same
 goal (meaningful non-DB unit coverage of business logic) without a source
 to port from.
+
+---
+
+#### ✅ Phase 11 — UI polish and corner-case review
+
+**Goal:** A full manual pass over every screen, live in the browser, to catch
+and fix layout bugs and missing functionality before real users touch it —
+not just automated-test-clean, but actually finished-looking.
+
+**Deliverables:**
+
+- **Per-language block status, wired up end-to-end.** The schema
+  (`content_blocks.sinhala_status`/`tamil_status`/`english_status`, plus an
+  aggregate `status`) has existed since Phase 1 and SPEC.md's problem
+  statement explicitly promises "each [language] with its own status
+  (draft/in review/approved)" — but no action or UI ever read or wrote it;
+  every block was permanently stuck at `'draft'`. Added
+  `app/_lib/blockStatus.ts` (the `BlockStatus` type, `BLOCK_STATUSES`,
+  `STATUS_LABEL`, and a pure `aggregateStatus` — a block's overall status is
+  only as advanced as its least-advanced enabled language), a new
+  `updateBlockLanguageStatusAction` in `blocks-actions.ts`, a status
+  `Select` per language pane in `BlockEditorView.tsx`, and humanized status
+  labels in `BlockRow.tsx` (was printing the raw `in_review` string).
+  `app/_lib/__tests__/blockStatus.test.ts` covers `aggregateStatus`.
+- **Fixed a flex-shrink layout bug**: the "Add group" button (`.inlineForm`
+  in `ProjectContentView.tsx`) wrapped its own label onto two lines and
+  rendered visibly taller than its sibling "Add ungrouped block" button,
+  because the adjacent `width: 100%` `Input` had no `flex-basis` ceiling,
+  so both items competed for space and the button — the only element able
+  to shrink by wrapping its text — absorbed the squeeze. Fixed by giving
+  `.inlineForm` a `flex: 1 1 16rem` basis and its `input`/`button` children
+  explicit `flex: 1`/`flex-shrink: 0`.
+- **Fixed a mobile layout bug**: the trilingual block editor's 3-column
+  grid (`.multiPane`) had no responsive fallback — on a 375px viewport the
+  three ~110px-wide panes clipped their own headers and status selects.
+  Added a `@media (max-width: 720px)` rule collapsing it to a single
+  stacked column, matching the breakpoint `@sovereignfs/ui`'s own
+  `SplitPane` already uses for the 2-language case.
+- **Fixed a form-layout bug**: the font-upload form reused `.inviteForm`'s
+  `align-items: flex-end`, which bottom-aligns a short submit button
+  against its tallest sibling — fine for the member-invite form's 3
+  same-height fields, but the font form's multi-checkbox "Scripts"
+  fieldset is much taller than the "Upload font" button, so the button
+  visually crowded the last checkbox row. Added a dedicated `.uploadForm`
+  (`align-items: flex-start`) and `.uploadFormSubmit` (`flex-basis: 100%`,
+  always its own row) instead of reusing `.inviteForm`.
+
+**Dependencies:** all prior phases (this is a review pass across the whole
+app, not a new vertical slice)
+
+**Review checklist:**
+
+- ✅ `pnpm typecheck` / `eslint` / `prettier --check` all pass
+- ✅ `pnpm vitest run` — 61/61 passing (7 test files)
+- ✅ Verified live: created a project, a group, and a block; walked the
+  per-language status selects through draft → in review → approved and
+  confirmed the aggregate status shown on the block row only advances once
+  every enabled language does; confirmed both CSS fixes render correctly
+  at desktop and 375px-mobile viewport widths; re-verified members, fonts,
+  export, and settings sections render without regressions
+
+**Discovered during this phase**: `characterLimit`, `wordLimit`, `notes`,
+and the `is*Locked` columns on `content_blocks` are also unused dead schema
+— present since Phase 1, never wired to any action or UI, and not part of
+this plugin's own SPEC.md (unlike status, which SPEC explicitly promises).
+Left alone rather than building three more speculative features into a
+polish pass; a future task should either wire them up or drop the columns.
