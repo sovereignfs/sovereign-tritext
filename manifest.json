@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "com.mooniak.tritext",
   "name": "Tritext",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Trilingual content and translation management",
   "type": "sovereign",
   "runtime": "native",
@@ -11,6 +11,12 @@
   "icon": "icon.svg",
   "database": "isolated",
   "permissions": ["auth:session", "db:readWrite", "storage:readWrite", "notifications:send"],
+  "monetization": {
+    "model": "one_time",
+    "license": {
+      "publicKey": "xhhkAwCITSziPP68aJl0JaFYyLnPn8cm9wY17Lp-X24"
+    }
+  },
   "repository": "https://github.com/sovereignfs/sovereign-tritext",
   "compatibility": {
     "minPlatformVersion": "0.19.0"

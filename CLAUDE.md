@@ -105,10 +105,12 @@ go through `sdk.storage.put()` (key: `fonts/<fontId>/<filename>`);
 `type: "sovereign"` plugins may declare a `monetization` block gated by an
 author-held Ed25519 keypair (RFC 0003 in the platform repo). Route-level
 entitlement gating is enforced by the platform itself — **no `sdk.billing`
-calls are needed** for a single-tier paywall. Planned model: `one_time`
-(perpetual access on purchase). **Do not add the `monetization` block to
-`manifest.json` before Phase 9** — an unset `license.publicKey` placeholder
-fails manifest validation, and no real keypair exists yet.
+calls are needed** for a single-tier paywall. As of Phase 9, `manifest.json`
+declares `model: "one_time"` with a real `license.publicKey`. The matching
+private key is held only by the developer (outside this repo, outside the
+platform monorepo, outside any scratchpad) — it was never committed and
+never will be; a compromised or lost key means re-keying the manifest and
+re-issuing every license token.
 
 ### Ported from the prototype
 
@@ -197,3 +199,4 @@ adapters RFC 0003 already defines at the platform level.
 | Custom fonts (`custom_fonts` table) are tenant-wide, and their management UI is gated by *whichever* project's owner/admin check the admin happens to be viewing, not a dedicated instance-admin role | Tritext has no instance-level admin concept of its own (only per-project owner/admin/editor/viewer) and `custom_fonts` carries no `project_id` (deliberate — one font library shared across every project in the tenant, matching CLAUDE.md's Data model). Phase 8 reuses Phase 5's project-admin check as the only gate available, accepting that an admin of Project A can add/remove tenant-wide fonts from Project A's page even though the effect is visible in Project B too. |
 | `familyName` is restricted to `/^[a-zA-Z0-9 _-]+$/` at upload time (`fonts-actions.ts`) | It flows unescaped into `app/layout.tsx`'s injected `<style>` tag (`fontFaceCss`) — CSS has no general-purpose string-escaping mechanism to sanitize it at render time instead, so the only safe point to enforce this is before it's ever stored. |
 | `app/layout.tsx` renders only a `<style>` tag and `{children}` — no wrapping element | Every existing page already owns its own root layout div (`.page`, `.blockEditorPage`) with its own padding; a layout that also added a wrapping `<main>` (the pattern `sovereign-plainwrite`/`sovereign-tasks` use) would double up spacing across every page, since none of Tritext's pages were built expecting a layout-level wrapper. |
+| Ed25519 private key generated once for Phase 9, never persisted to any file in either repo or the scratchpad | The manifest only ever needs the public key; a plaintext private-key file sitting in a git-ignored `.local` checkout is still a real leak surface (backups, shared machines, accidental `git add -f`). Handed directly to the developer in chat instead, with the instruction to move it into a password manager themselves. |

@@ -404,17 +404,44 @@ CSS-identifier validity.
 
 ---
 
-#### 📋 Phase 9 — Monetization (paywall)
+#### ✅ Phase 9 — Monetization (paywall)
 
 **Goal:** Turn on the purchase gate.
 
-**Deliverables:** author Ed25519 keypair generated and kept outside the
-repo; `monetization` block added to `manifest.json` (`model: "one_time"`);
-verified against a real platform instance that `/tritext` is blocked without
-a license and unblocked with one.
+**Deliverables:**
+
+- Author Ed25519 keypair generated with the Node.js snippet from the
+  platform repo's `docs/plugin-development.md`. The private key was never
+  written to disk anywhere in this repo, the platform monorepo, or the
+  scratchpad — it was generated, used once to sign a test license token
+  for live verification, and handed to the developer directly to move into
+  their own secure storage. Only the public key is committed (below).
+- `monetization` block added to `manifest.json`: `model: "one_time"`,
+  `license.publicKey` set to the generated public key. Version bumped to
+  `0.8.0`.
 
 **Dependencies:** none technically, but done last so every feature is
 already built and testable before the paywall is live
+
+**Review checklist:**
+
+- ✅ `pnpm typecheck` / `eslint` / `prettier --check` all pass
+- ✅ `pnpm vitest run` — unaffected, all still passing (paywall enforcement
+  is platform-side, not plugin code)
+- ✅ Verified live against the real platform instance: navigating to
+  `/tritext` with no license showed the platform's paywall page ("One-time
+  purchase / Contact the plugin author to purchase access.") with a license
+  token import field, confirming access is blocked; signed a real license
+  token (`pluginId`/`sub`/`issuedAt` payload, Ed25519-signed with the
+  generated private key) and submitted it through "Activate license";
+  `/tritext` then rendered the normal project list, confirming the
+  signature verifies and access unblocks
+
+**Discovered during this phase**: no plugin code changes at all — RFC 0003's
+gate is entirely enforced by the platform reading `manifest.json`'s
+`monetization` block and verifying license tokens against `publicKey`
+offline. This phase is purely a manifest change plus the one-time keypair
+ceremony.
 
 ---
 
