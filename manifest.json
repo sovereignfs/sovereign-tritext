@@ -11,7 +11,14 @@
   "shell": "default",
   "icon": "icon.svg",
   "database": "isolated",
-  "permissions": ["auth:session", "db:readWrite", "storage:readWrite", "notifications:send"],
+  "permissions": [
+    "auth:session",
+    "db:readWrite",
+    "storage:readWrite",
+    "notifications:send",
+    "data:export",
+    "data:import"
+  ],
   "monetization": {
     "model": "one_time",
     "license": {
