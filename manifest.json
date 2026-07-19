@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "com.mooniak.tritext",
   "name": "Tritext",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "description": "Trilingual content and translation management",
   "development": true,
   "type": "sovereign",
@@ -22,7 +22,7 @@
   "monetization": {
     "model": "one_time",
     "license": {
-      "publicKey": "xhhkAwCITSziPP68aJl0JaFYyLnPn8cm9wY17Lp-X24"
+      "publicKey": "qGB8T-f0z0fqCe93Sjruo5ifOIHbKbYo_sh1Y-iK2jg"
     }
   },
   "repository": "https://github.com/sovereignfs/sovereign-tritext",
